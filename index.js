@@ -51,14 +51,17 @@ function scheduler() {
         console.log('🚀 posted to news!', postData);
 
       }, function(postNewsErr) {
-        console.log('😭 error posting news ', postNewsErr);
+        console.log('😭 error posting news \n', postNewsErr);
+        process.exit(1);
       });
       
     }, function(getNewsErr) {
-      console.log('😭 error getting news ', getNewsErr);
+      console.log('😭 error getting news \n', getNewsErr);
+      process.exit(1);
     });
   }, function(authErr) {
-    console.log('😭 error authenticating ', authErr);
+    console.log('😭 error authenticating \n', authErr);
+    process.exit(1);
   });
 }
 
