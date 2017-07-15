@@ -11,11 +11,12 @@
     "node": "5.1.0"
   },
   "dependencies": {
-    "body-parser": "^1.17.2",
-    "dotenv": "^4.0.0",
-    "express": "^4.15.3",
-    "method-override": "^2.3.9",
-    "morgan": "^1.8.2",
-    "request-promise": "^4.2.1"
+    "body-parser": "1.17.2",
+    "dotenv": "4.0.0",
+    "express": "4.15.3",
+    "method-override": "2.3.9",
+    "moment": "2.18.1",
+    "morgan": "1.8.2",
+    "request-promise": "4.2.1"
   }
 }
