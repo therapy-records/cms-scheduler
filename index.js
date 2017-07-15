@@ -35,9 +35,16 @@ const authOptions = {
 function scheduler() {
   return rp(API.LOGIN, authOptions).then(function(auth) {
     const token = auth.token;
-    return rp(API.NEWS).then(function(d) {
-      const data = JSON.parse(d);
-      const origArticle = data[3];
+    const getOptions = {
+      method: 'GET',
+      json: true,
+      headers: {
+        Authorization: token
+      }
+    };
+
+    return rp(API.NEWS_QUEUE, getOptions).then(function(queueData) {
+      const origArticle = queueData[0];
       const _article = articleHelper(origArticle);
       const postOptions = {
         method: 'POST',
@@ -49,7 +56,7 @@ function scheduler() {
       };
       return rp(API.POST_NEWS, postOptions).then(function(postData) {
         console.log('🚀 posted to news!', postData);
-
+        process.exit(1);
       }, function(postNewsErr) {
         console.log('😭 error posting news \n', postNewsErr);
         process.exit(1);
