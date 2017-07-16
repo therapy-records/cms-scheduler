@@ -15,6 +15,7 @@ var createHttpOptions = require('./apiHelper').createHttpOptions;
 var postNewsArticle = require('./apiHelper').postNewsArticle;
 var deleteNewsQueuePost = require('./apiHelper').deleteNewsQueuePost;
 var handlePostAndDeleteArticle = require('./apiHelper').handlePostAndDeleteArticle;
+var throwConsole = require('./consoleHelper');
 
 const sessionRange = {
   end: moment().add(8, 'hours')
@@ -32,7 +33,7 @@ app.use(function (req, res, next){
 app.use(morgan('dev'));
 
 app.listen(port);
-console.log('Server running on port ' + port);
+throwConsole('🚀  Server running on port ' + port);
 
 function scheduler() {
   return rp(API.LOGIN, authOptions).then(function(auth) {
@@ -76,21 +77,25 @@ function scheduler() {
             if (currentTimeIsScheduledTime) {
               return handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
             } else {
-              console.log('need to wait for currentTimeIsScheduledTime in this session...');
+              throwConsole('need to wait for currentTimeIsScheduledTime in this session...');
               // still waiting for currentTimeIsScheduledTime in this session...
             }  
           }
         });
       } else {
-        console.log('no posts in queue, all up to date!');
+        throwConsole('no posts in queue, all up to date!');
         process.exit(0); 
       }
     }, function(getNewsErr) {
-      console.error('😭 error getting news \n', getNewsErr);
+      const message = '😭  error getting news \n' + getNewsErr;
+      const isErr = true;
+      throwConsole(message, isErr);
       process.exit(1);
     });
   }, function(authErr) {
-    console.error('😭 error authenticating \n', authErr);
+    const message = '😭  error authenticating \n' + authErr;
+    const isErr = true;
+    throwConsole(message, isErr);
     process.exit(1);
   });
 }

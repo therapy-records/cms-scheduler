@@ -30,17 +30,22 @@ function deleteNewsQueuePost(postId, httpOptions) {
 
 function handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId) {
   return postNewsArticle(postOptions).then(function(postData) {
-    console.log('🚀 posted new article to news! \n', postData);
+    const message = '🚀  posted new article to news! \n' + postData;
+    throwConsole(message);
     return deleteNewsQueuePost(postInQueueId, deleteOptions).then(function(deletedPost) {
-      console.log('🚀 deleted post in queue');
+      const message = '🚀  deleted post in queue';
+      throwConsole(message);
       process.exit(0);
     }, function(delPostError) {
-      console.error('😭 error deleting post in queue \n', delPostError);
+      const message = '😭  error deleting post in queue \n' + delPostError
+      const isErr = true;
+      throwConsole(message, isErr);
       process.exit(1);
     });
-
   }, function(postNewsErr) {
-    console.error('😭 error posting news \n', postNewsErr);
+    const message = '😭  error posting news \n' + delPostError
+    const isErr = true;
+    throwConsole(message, isErr);
     process.exit(1);
   });
 }
