@@ -34,9 +34,9 @@ const authOptions = {
 };
 
 
-function createHttpOptions(token, body) {
+function createHttpOptions(token, method, body) {
   return {
-    method: 'GET',
+    method: method,
     json: true,
     body: body,
     headers: {
@@ -45,49 +45,77 @@ function createHttpOptions(token, body) {
   };
 };
 
+function postNewsArticle(httpOptions) {
+  return rp(API.POST_NEWS, httpOptions);
+}
+
+function deleteNewsQueuePost(postId, httpOptions) {
+  return rp(API.NEWS_QUEUE + '/' + postId, httpOptions);
+}
+
+function handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId) {
+  return postNewsArticle(postOptions).then(function(postData) {
+    console.log('🚀 posted new article to news! \n', postData);
+    return deleteNewsQueuePost(postInQueueId, deleteOptions).then(function(deletedPost) {
+      console.log('🚀 deleted post in queue');
+      process.exit(0);
+    }, function(delPostError) {
+      console.error('😭 error deleting post in queue \n', delPostError);
+      process.exit(1);
+    });
+
+  }, function(postNewsErr) {
+    console.error('😭 error posting news \n', postNewsErr);
+    process.exit(1);
+  });
+}
+
 function scheduler() {
   return rp(API.LOGIN, authOptions).then(function(auth) {
     const token = auth.token;
-    const getOptions = createHttpOptions(token);
-    let postOptions = createHttpOptions(token);
+    const getOptions = createHttpOptions(token, 'GET');
+    let postOptions = createHttpOptions(token, 'POST');
+    let deleteOptions = createHttpOptions(token, 'DELETE');
 
     return rp(API.NEWS_QUEUE, getOptions).then(function(queueData) {
       // if there any articles in the queue,
       // check if an article needs posting now (scheduledTime = now || beforeNow)
       // if an article's ascheduledTime is before the end of the session's range (8 hours)
       // wait for that time, and then do a POST.
+
       if (queueData.length && queueData.length > 0) {
         queueData.map((postInQueue) => {
-
-          const scheduledTime = moment(postInQueue.scheduledTime).toISOString();
+          const postInQueueScheduledTime = postInQueue.scheduledTime;
+          const scheduledTime = moment(postInQueueScheduledTime).toISOString();
           const sessionRange = {
             end: moment().add(8, 'hours')
           };
 
           let needsPostingIn8HourSession = moment(scheduledTime).isBetween(moment(), sessionRange.end);
           const currentTimeIsAfterScheduledTime = moment(scheduledTime).isBefore(moment());
+
           const needsPostingNow = currentTimeIsAfterScheduledTime;
           needsPostingIn8HourSession = false;
 
+          let postInQueueId;
+
+          if (needsPostingNow || currentTimeIsScheduledTime) {
+            // create easy reference to the posts ID for api DELETE
+            postInQueueId = postInQueue._id;
+           
+            // prep the article in the queue we want for api POST
+            const _article = articleHelper(postInQueue);
+            postOptions.body = _article;
+          }
+
           if (needsPostingNow) {
-            console.log('post needs posting now.')
+            return handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
           } else if (needsPostingIn8HourSession) {
 
             const currentTimeIsScheduledTime = false;
 
             if (currentTimeIsScheduledTime) {
-              const _article = articleHelper(postInQueue);
-
-              postOptions.body = _article;
-
-              return rp(API.POST_NEWS, postOptions).then(function(postData) {
-                console.log('🚀 posted new article to news!', postData);
-                // todo: delete article in queue
-                process.exit(1);
-              }, function(postNewsErr) {
-                console.log('😭 error posting news \n', postNewsErr);
-                process.exit(1);
-              });
+              return handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
             } else {
               console.log('need to wait for currentTimeIsScheduledTime in this session...');
               // still waiting for currentTimeIsScheduledTime in this session...
@@ -100,11 +128,11 @@ function scheduler() {
       }
       
     }, function(getNewsErr) {
-      console.log('😭 error getting news \n', getNewsErr);
+      console.error('😭 error getting news \n', getNewsErr);
       process.exit(1);
     });
   }, function(authErr) {
-    console.log('😭 error authenticating \n', authErr);
+    console.error('😭 error authenticating \n', authErr);
     process.exit(1);
   });
 }
