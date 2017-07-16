@@ -10,6 +10,16 @@ var port = process.env.PORT || 2000;
 var moment = require('moment');
 var API = require('./constants');
 var articleHelper = require('./articleHelper');
+var authOptions = require('./apiHelper').authOptions;
+var createHttpOptions = require('./apiHelper').createHttpOptions;
+var postNewsArticle = require('./apiHelper').postNewsArticle;
+var deleteNewsQueuePost = require('./apiHelper').deleteNewsQueuePost;
+var handlePostAndDeleteArticle = require('./apiHelper').handlePostAndDeleteArticle;
+
+const sessionRange = {
+  end: moment().add(8, 'hours')
+};
+
 app.use(function (req, res, next){
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.header('Access-Control-Allow-Methods', 'POST');
@@ -24,52 +34,6 @@ app.use(morgan('dev'));
 app.listen(port);
 console.log('Server running on port ' + port);
 
-const authOptions = {
-  method: 'POST',
-  body: {
-    username: process.env.NAME || '',
-    password: process.env.SECRET || ''
-  },
-  json: true
-};
-
-
-function createHttpOptions(token, method, body) {
-  return {
-    method: method,
-    json: true,
-    body: body,
-    headers: {
-      Authorization: token
-    }
-  };
-};
-
-function postNewsArticle(httpOptions) {
-  return rp(API.POST_NEWS, httpOptions);
-}
-
-function deleteNewsQueuePost(postId, httpOptions) {
-  return rp(API.NEWS_QUEUE + '/' + postId, httpOptions);
-}
-
-function handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId) {
-  return postNewsArticle(postOptions).then(function(postData) {
-    console.log('🚀 posted new article to news! \n', postData);
-    return deleteNewsQueuePost(postInQueueId, deleteOptions).then(function(deletedPost) {
-      console.log('🚀 deleted post in queue');
-      process.exit(0);
-    }, function(delPostError) {
-      console.error('😭 error deleting post in queue \n', delPostError);
-      process.exit(1);
-    });
-
-  }, function(postNewsErr) {
-    console.error('😭 error posting news \n', postNewsErr);
-    process.exit(1);
-  });
-}
-
 function scheduler() {
   return rp(API.LOGIN, authOptions).then(function(auth) {
     const token = auth.token;
@@ -77,20 +41,16 @@ function scheduler() {
     let postOptions = createHttpOptions(token, 'POST');
     let deleteOptions = createHttpOptions(token, 'DELETE');
 
+    // if there any articles in the queue,
+    // check if an article needs posting now (scheduledTime = now || beforeNow)
+    // if an article's ascheduledTime is before the end of the session's range (8 hours)
+    // wait for that time, and then do a POST.
     return rp(API.NEWS_QUEUE, getOptions).then(function(queueData) {
-      // if there any articles in the queue,
-      // check if an article needs posting now (scheduledTime = now || beforeNow)
-      // if an article's ascheduledTime is before the end of the session's range (8 hours)
-      // wait for that time, and then do a POST.
 
       if (queueData.length && queueData.length > 0) {
         queueData.map((postInQueue) => {
           const postInQueueScheduledTime = postInQueue.scheduledTime;
           const scheduledTime = moment(postInQueueScheduledTime).toISOString();
-          const sessionRange = {
-            end: moment().add(8, 'hours')
-          };
-
           let needsPostingIn8HourSession = moment(scheduledTime).isBetween(moment(), sessionRange.end);
           const currentTimeIsAfterScheduledTime = moment(scheduledTime).isBefore(moment());
 
@@ -111,7 +71,6 @@ function scheduler() {
           if (needsPostingNow) {
             return handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
           } else if (needsPostingIn8HourSession) {
-
             const currentTimeIsScheduledTime = false;
 
             if (currentTimeIsScheduledTime) {
@@ -124,9 +83,8 @@ function scheduler() {
         });
       } else {
         console.log('no posts in queue, all up to date!');
-        process.exit(1); 
+        process.exit(0); 
       }
-      
     }, function(getNewsErr) {
       console.error('😭 error getting news \n', getNewsErr);
       process.exit(1);
