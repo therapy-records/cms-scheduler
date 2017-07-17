@@ -4,7 +4,8 @@
   "description": "Therapy Records cms scheduler",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "webpack"
   },
   "author": "Therapy Records",
   "engines": {
@@ -18,5 +19,8 @@
     "moment": "2.18.1",
     "morgan": "1.8.2",
     "request-promise": "4.2.1"
+  },
+  "devDependencies": {
+    "webpack": "3.3.0"
   }
 }

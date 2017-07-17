@@ -5,7 +5,7 @@ var router = express.Router();
 var app = express();
 var methodOverride = require('method-override');
 var morgan = require('morgan');
-var rp = require('request-promise');
+import rp from 'request-promise';
 var port = process.env.PORT || 2000;
 var moment = require('moment');
 var API = require('./constants');
