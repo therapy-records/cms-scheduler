@@ -9,13 +9,7 @@ var rp = require('request-promise');
 var port = process.env.PORT || 2000;
 var moment = require('moment');
 var API = require('./constants');
-var articleHelper = require('./articleHelper');
-var authOptions = require('./apiHelper').authOptions;
-var createHttpOptions = require('./apiHelper').createHttpOptions;
-var postNewsArticle = require('./apiHelper').postNewsArticle;
-var deleteNewsQueuePost = require('./apiHelper').deleteNewsQueuePost;
-var handlePostAndDeleteArticle = require('./apiHelper').handlePostAndDeleteArticle;
-var throwConsole = require('./consoleHelper');
+var helpers = require('./helpers');
 
 const sessionRange = {
   end: moment().add(8, 'hours')
@@ -33,14 +27,14 @@ app.use(function (req, res, next){
 app.use(morgan('dev'));
 
 app.listen(port);
-throwConsole('🚀  Server running on port ' + port);
+helpers.throwConsole('🚀  Server running on port ' + port);
 
 function scheduler() {
-  return rp(API.LOGIN, authOptions).then(function(auth) {
+  return rp(API.LOGIN, helpers.authOptions).then(function(auth) {
     const token = auth.token;
-    const getOptions = createHttpOptions(token, 'GET');
-    let postOptions = createHttpOptions(token, 'POST');
-    let deleteOptions = createHttpOptions(token, 'DELETE');
+    const getOptions = helpers.createHttpOptions(token, 'GET');
+    let postOptions = helpers.createHttpOptions(token, 'POST');
+    let deleteOptions = helpers.createHttpOptions(token, 'DELETE');
 
     // if there any articles in the queue,
     // check if an article needs posting now (scheduledTime = now || beforeNow)
@@ -65,37 +59,37 @@ function scheduler() {
             postInQueueId = postInQueue._id;
            
             // prep the article in the queue we want for api POST
-            const _article = articleHelper(postInQueue);
+            const _article = helpers.articleHelper(postInQueue);
             postOptions.body = _article;
           }
 
           if (needsPostingNow) {
-            return handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
+            return this.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
           } else if (needsPostingIn8HourSession) {
             const currentTimeIsScheduledTime = false;
 
             if (currentTimeIsScheduledTime) {
-              return handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
+              return this.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
             } else {
-              throwConsole('need to wait for currentTimeIsScheduledTime in this session...');
+              helpers.throwConsole('need to wait for currentTimeIsScheduledTime in this session...');
               // still waiting for currentTimeIsScheduledTime in this session...
             }  
           }
         });
       } else {
-        throwConsole('no posts in queue, all up to date!');
+        helpers.throwConsole('no posts in queue, all up to date!');
         process.exit(0); 
       }
     }, function(getNewsErr) {
       const message = '😭  error getting news \n' + getNewsErr;
       const isErr = true;
-      throwConsole(message, isErr);
+      helpers.throwConsole(message, isErr);
       process.exit(1);
     });
   }, function(authErr) {
     const message = '😭  error authenticating \n' + authErr;
     const isErr = true;
-    throwConsole(message, isErr);
+    helpers.throwConsole(message, isErr);
     process.exit(1);
   });
 }
