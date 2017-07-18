@@ -1,5 +1,6 @@
-var path = require('path');
+const path = require('path');
 const fs = require('fs');
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 // ensures that we don't get build errors from node_modules
 const nodeExternals = require('webpack-node-externals');
@@ -10,10 +11,15 @@ fs.readdirSync('node_modules')
     nodeModules[mod] = 'commonjs ' + mod;
   });
 
-  
 module.exports = {
   target: 'node',
   entry: './src/index.js',
+  node: {
+    console: true,
+    fs: 'empty',
+    net: 'empty',
+    tls: 'empty'
+  },
   externals: [nodeExternals()],
   module: {
     loaders: [
@@ -24,14 +30,11 @@ module.exports = {
       }
     ]
   },
+  plugins: [
+    new UglifyJSPlugin()
+  ],
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist')
-  },
-  node: {
-    console: true,
-    fs: 'empty',
-    net: 'empty',
-    tls: 'empty'
   }
 };
