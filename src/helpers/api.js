@@ -1,4 +1,5 @@
-var API = require('../constants');
+require('dotenv').config();
+const API = require('../constants');
 
 const authOptions = {
   method: 'POST',
