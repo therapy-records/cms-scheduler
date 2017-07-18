@@ -1,19 +1,30 @@
 var path = require('path');
+var nodeExternals = require('webpack-node-externals');
 
 module.exports = {
   target: 'node',
   entry: './src/index.js',
-  resolve: {
-    modules: [
-      path.join(__dirname, './src/helpers/*.js'),
-      path.join(__dirname, './node_modules')
-    ]
-  },
+  externals: [nodeExternals()],
+  rules: [
+    {
+      test: /\.js$/,
+      exclude: /(node_modules)/,
+      use: {
+        loader: 'babel-loader',
+        options: {
+          presets: ['env']
+        }
+      }
+    }
+  ],
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist')
   },
   node: {
-    fs: "empty"
+    console: true,
+    fs: 'empty',
+    net: 'empty',
+    tls: 'empty'
   }
 };
