@@ -16,7 +16,7 @@ const sessionRange = {
   end: moment().add(8, 'hours')
 };
 
-app.use(function (req, res, next){
+app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   res.header('Access-Control-Allow-Methods', 'POST');
   methodOverride('X-HTTP-Method-Override');
@@ -30,18 +30,18 @@ app.use(morgan('dev'));
 app.listen(port);
 helpers.throwConsole('🚀  Server running on port ' + port);
 
-function scheduler() {
-  return rp(API.LOGIN, helpers.authOptions).then(function(auth) {
+const scheduler = () => {
+  rp(API.LOGIN, helpers.authOptions).then((auth) => {
     const token = auth.token;
     const getOptions = helpers.createHttpOptions(token, 'GET');
     let postOptions = helpers.createHttpOptions(token, 'POST');
     let deleteOptions = helpers.createHttpOptions(token, 'DELETE');
-
+    
     // if there any articles in the queue,
     // check if an article needs posting now (scheduledTime = now || beforeNow)
     // if an article's ascheduledTime is before the end of the session's range (8 hours)
     // wait for that time, and then do a POST.
-    return rp(API.NEWS_QUEUE, getOptions).then(function(queueData) {
+    return rp(API.NEWS_QUEUE, getOptions).then((queueData) => {
 
       if (queueData.length && queueData.length > 0) {
         queueData.map((postInQueue) => {
@@ -81,13 +81,14 @@ function scheduler() {
         helpers.throwConsole('no posts in queue, all up to date!');
         process.exit(0); 
       }
-    }, function(getNewsErr) {
+    }, (getNewsErr) => {
       const message = '😭  error getting news \n' + getNewsErr;
       const isErr = true;
       helpers.throwConsole(message, isErr);
       process.exit(1);
     });
-  }, function(authErr) {
+
+  }, (authErr) => {
     const message = '😭  error authenticating \n' + authErr;
     const isErr = true;
     helpers.throwConsole(message, isErr);

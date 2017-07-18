@@ -1,9 +1,7 @@
-////////////////
-// need es6
-////////////////
+// TODO: update to es6
 
 // preps an object ready for API post
-function articleHelper(article) {
+const articleHelper = (article) => {
   // handle old post schemas (mainBody is required)
   if (article.mainBody) {
     article.bodyMain = article.mainBody;
@@ -15,4 +13,4 @@ function articleHelper(article) {
   return article;
 }
 
-module.exports = articleHelper;
+export default articleHelper;

@@ -1,9 +1,17 @@
-const _exports = {
-  articleHelper: require('./article'),
-  authOptions: require('./api').authOptions,
-  createHttpOptions: require('./api').createHttpOptions,
-  handlePostAndDeleteArticle: require('./api').handlePostAndDeleteArticle,
-  throwConsole: require('./console')
+import articleHelper from './article';
+import {
+  authOptions,
+  createHttpOptions,
+  handlePostAndDeleteArticle
+} from './api';
+import throwConsole from './console';
+  
+const helpers = {
+  articleHelper,
+  authOptions,
+  createHttpOptions,
+  handlePostAndDeleteArticle,
+  throwConsole
 }
 
-module.exports = _exports;
+export default helpers;

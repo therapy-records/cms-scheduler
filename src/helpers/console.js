@@ -1,6 +1,6 @@
 const lineBreak = '||--------------------------------------------------' + '\n';
 
-function throwConsole(message, isErr) {
+const throwConsole = (message, isErr) => {
   const finalMessage = '\n' + 
     lineBreak + 
     '|| ' + message +
@@ -14,4 +14,4 @@ function throwConsole(message, isErr) {
   }
 }
 
-module.exports = throwConsole;
+export default throwConsole;

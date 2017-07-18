@@ -10,4 +10,4 @@ const constants = {
   NEWS_QUEUE
 };
 
-module.exports = constants;
+export default constants;

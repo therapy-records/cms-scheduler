@@ -1,7 +1,8 @@
 require('dotenv').config();
-const API = require('../constants');
+import API from '../constants';
+import throwConsole from './console';
 
-const authOptions = {
+export const authOptions = {
   method: 'POST',
   body: {
     username: process.env.NAME || '',
@@ -10,7 +11,7 @@ const authOptions = {
   json: true
 };
 
-function createHttpOptions(token, method, body) {
+export const createHttpOptions = (token, method, body) => {
   return {
     method: method,
     json: true,
@@ -21,40 +22,39 @@ function createHttpOptions(token, method, body) {
   };
 };
 
-function postNewsArticle(httpOptions) {
-  return rp(API.POST_NEWS, httpOptions);
-}
+const postNewsArticle = (httpOptions) =>
+  rp(API.POST_NEWS, httpOptions);
 
-function deleteNewsQueuePost(postId, httpOptions) {
-  return rp(API.NEWS_QUEUE + '/' + postId, httpOptions);
-}
+const deleteNewsQueuePost = (postId, httpOptions) => 
+  rp(API.NEWS_QUEUE + '/' + postId, httpOptions);
 
-function handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId) {
-  return postNewsArticle(postOptions).then(function(postData) {
+export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQueueId) =>
+  postNewsArticle(postOptions).then((postData) => {
     const message = '🚀  posted new article to news! \n' + postData;
-    helpers.throwConsole(message);
+    throwConsole(message);
     return deleteNewsQueuePost(postInQueueId, deleteOptions).then(function(deletedPost) {
       const message = '🚀  deleted post in queue';
-      helpers.throwConsole(message);
+      throwConsole(message);
       process.exit(0);
-    }, function(delPostError) {
+    }, (delPostError) => {
       const message = '😭  error deleting post in queue \n' + delPostError
       const isErr = true;
-      helpers.throwConsole(message, isErr);
+      throwConsole(message, isErr);
       process.exit(1);
     });
-  }, function(postNewsErr) {
+  }, (postNewsErr) => {
     const message = '😭  error posting news \n' + delPostError
     const isErr = true;
-    helpers.throwConsole(message, isErr);
+    throwConsole(message, isErr);
     process.exit(1);
   });
-}
 
-module.exports = {
+const apiHelper = {
   authOptions,
   createHttpOptions,
   postNewsArticle,
   deleteNewsQueuePost,
   handlePostAndDeleteArticle
-}
+};
+
+export default apiHelper;
