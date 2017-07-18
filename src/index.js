@@ -1,15 +1,16 @@
 require('dotenv').config();
-var express = require('express');
-var bodyParser = require('body-parser');
-var router = express.Router();
-var app = express();
-var methodOverride = require('method-override');
-var morgan = require('morgan');
+import express from 'express';
+import bodyParser from 'body-parser';
+import methodOverride from 'method-override';
+import morgan from 'morgan';
 import rp from 'request-promise';
-var port = process.env.PORT || 2000;
-var moment = require('moment');
-var API = require('./constants');
-var helpers = require('./helpers');
+import moment from 'moment';
+import API from './constants';
+import helpers from './helpers';
+
+const port = process.env.PORT || 2000;
+const router = express.Router();
+const app = express();
 
 const sessionRange = {
   end: moment().add(8, 'hours')
