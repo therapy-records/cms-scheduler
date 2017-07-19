@@ -1,4 +1,5 @@
 require('dotenv').config();
+import rp from 'request-promise';
 import API from '../constants';
 import throwConsole from './console';
 

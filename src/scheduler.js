@@ -42,12 +42,12 @@ const scheduler = () => {
           }
 
           if (needsPostingNow) {
-            return this.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
+            return helpers.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
           } else if (needsPostingIn8HourSession) {
             const currentTimeIsScheduledTime = false;
 
             if (currentTimeIsScheduledTime) {
-              return this.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
+              return helpers.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
             } else {
               helpers.throwConsole('need to wait for currentTimeIsScheduledTime in this session...');
               // still waiting for currentTimeIsScheduledTime in this session...
