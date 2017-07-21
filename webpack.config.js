@@ -1,10 +1,10 @@
-const path = require('path');
-const fs = require('fs');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+var path = require('path');
+var fs = require('fs');
+var UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 // ensures that we don't get build errors from node_modules
-const nodeExternals = require('webpack-node-externals');
-let nodeModules = {};
+var nodeExternals = require('webpack-node-externals');
+var nodeModules = {};
 fs.readdirSync('node_modules')
   .filter((x) => ['.bin'].indexOf(x) === -1)
   .forEach((mod) => {
