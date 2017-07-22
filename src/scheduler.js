@@ -22,17 +22,20 @@ const scheduler = () => {
 
       if (queueData.length && queueData.length > 0) {
         queueData.map((postInQueue) => {
-          const postInQueueScheduledTime = postInQueue.scheduledTime;
-          const scheduledTime = moment(postInQueueScheduledTime).toISOString();
-          let needsPostingIn8HourSession = moment(scheduledTime).isBetween(moment(), sessionRange.end);
+          const scheduledTime = moment(postInQueue.scheduledTime).toISOString();
+
+          const needsPostingIn8HourSession = moment(scheduledTime).isBetween(moment(), sessionRange.end);
           const currentTimeIsAfterScheduledTime = moment(scheduledTime).isBefore(moment());
 
+          const currentTimeIsScheduledTime = false;
           const needsPostingNow = currentTimeIsAfterScheduledTime;
-          needsPostingIn8HourSession = false;
-
           let postInQueueId;
+          const needsPostingPrep = needsPostingNow || 
+                                   needsPostingIn8HourSession ||
+                                   currentTimeIsScheduledTime;
 
-          if (needsPostingNow || currentTimeIsScheduledTime) {
+
+          if (needsPostingPrep) {
             // create easy reference to the posts ID for api DELETE
             postInQueueId = postInQueue._id;
            
@@ -44,14 +47,10 @@ const scheduler = () => {
           if (needsPostingNow) {
             return helpers.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
           } else if (needsPostingIn8HourSession) {
-            const currentTimeIsScheduledTime = false;
-
+            helpers.throwConsole('checking currentTimeIsScheduledTime in this session...');
             if (currentTimeIsScheduledTime) {
               return helpers.handlePostAndDeleteArticle(postOptions, deleteOptions, postInQueueId);
-            } else {
-              helpers.throwConsole('need to wait for currentTimeIsScheduledTime in this session...');
-              // still waiting for currentTimeIsScheduledTime in this session...
-            }  
+            } 
           }
         });
       } else {
