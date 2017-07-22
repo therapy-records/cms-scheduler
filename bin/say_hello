@@ -1,4 +1,0 @@
-#! /app/.heroku/node/bin/node
-
-console.log('Hello!!');
-process.exit();

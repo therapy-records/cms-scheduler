@@ -1,1 +1,1 @@
-web: yarn build && node dist/bundle.js
+worker: node dist/bundle.js
