@@ -1,5 +1,4 @@
-#!/usr/bin/env node
+#! /app/.heroku/node/bin/node
 
 console.log('Hello!!');
-node dist/bundle.js
 process.exit();
