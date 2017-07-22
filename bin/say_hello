@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+
+console.log('Hello!!');
+node dist/bundle.js
+process.exit();
