@@ -23,6 +23,11 @@ const scheduler = () => {
       if (queueData.length && queueData.length > 0) {
         queueData.map((postInQueue) => {
           const scheduledTime = moment(postInQueue.scheduledTime).toISOString();
+          const scheduledOutOfSessionRange = moment(scheduledTime).isAfter(sessionRange.end);
+          if (scheduledOutOfSessionRange) {
+            helpers.throwConsole('posts in queue are outside of this X hour session, all up to date!');
+            process.exit(0);
+          }
 
           const needsPostingIn8HourSession = moment(scheduledTime).isBetween(moment(), sessionRange.end);
           const currentTimeIsAfterScheduledTime = moment(scheduledTime).isBefore(moment());
@@ -33,7 +38,6 @@ const scheduler = () => {
           const needsPostingPrep = needsPostingNow || 
                                    needsPostingIn8HourSession ||
                                    currentTimeIsScheduledTime;
-
 
           if (needsPostingPrep) {
             // create easy reference to the posts ID for api DELETE
@@ -55,7 +59,7 @@ const scheduler = () => {
         });
       } else {
         helpers.throwConsole('no posts in queue, all up to date!');
-        process.exit(0); 
+        process.exit(0);
       }
     }, (getNewsErr) => {
       const message = '😭  error getting news \n' + getNewsErr;
