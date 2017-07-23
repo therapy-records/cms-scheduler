@@ -47,6 +47,7 @@ const scheduler = () => {
     // check if an article needs posting now (scheduledTime = now || beforeNow)
     // if an article's ascheduledTime is before the end of the session's range (8 hours)
     // wait for that time, and then do a POST.
+
     return rp(API.NEWS_QUEUE, getOptions).then((queueData) => {
       if (queueData.length && queueData.length > 0) {
         helpers.throwConsole(`queue has ${queueData.length} items`);
