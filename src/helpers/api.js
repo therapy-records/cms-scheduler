@@ -33,7 +33,7 @@ export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQue
   postNewsArticle(postOptions).then((postData) => {
     const message = '🚀  posted new article to news! \n' + postData;
     throwConsole(message);
-    return deleteNewsQueuePost(postInQueueId, deleteOptions).then(function(deletedPost) {
+    return deleteNewsQueuePost(postInQueueId, deleteOptions).then((deletedPost) => {
       const message = '🚀  deleted post in queue';
       throwConsole(message);
       process.exit(0);
