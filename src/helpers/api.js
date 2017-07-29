@@ -44,7 +44,7 @@ export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQue
       process.exit(1);
     });
   }, (postNewsErr) => {
-    const message = '😭  error posting news \n' + delPostError
+    const message = '😭  error posting news \n' + postNewsErr
     const isErr = true;
     throwConsole(message, isErr);
     process.exit(1);
