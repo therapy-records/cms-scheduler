@@ -3,26 +3,29 @@ import moment from 'moment';
 import API from './constants';
 import helpers from './helpers';
 
+// TODO: tidy httpPostOptions & httpDeleteOptions usage!
+
+let token;
+
 const sessionRange = {
   end: moment().add(24, 'hours')
 };
 
-const handlePendingPosts = (pendingPosts) => {
+const handlePendingPosts = (pendingPosts, httpDeleteOptions) => {
   return pendingPosts.forEach((pendingPost) => {
     const now = moment();
     const postScheduledAt = pendingPost.scheduledTime;
     const waitTime = moment.duration(moment(postScheduledAt).diff(moment(now)));
-    // const waitTimeInMs = parseInt(waitTime.asMilliseconds());
-    let waitTimeInMs = 20000;
+    const waitTimeInMs = parseInt(waitTime.asMilliseconds());
 
-    if (pendingPost.devTest && pendingPost.devTest == 2) {
-      waitTimeInMs = 25000;
-    }
+    // prep the article for api post / handle old fields
+    const _article = helpers.articleHelper(pendingPost);
+    const httpPostOptions = helpers.createHttpOptions(token, 'POST', _article);
 
-    helpers.throwConsole(`waiting to post article ${pendingPost._id} (${pendingPost.title})`);
+    helpers.throwConsole(`ready & waiting to post article '${_article.title}' @ ${_article.scheduledTime}`);
     return setTimeout(() => {
-      return console.log('interval - post article! ', waitTimeInMs);
-      helpers.handlePostAndDeleteArticle(httpPostOptions, httpDeleteOptions, pendingPost.postId);
+      helpers.throwConsole(`time to post article ${_article._id}! @ ${now.format('MMMM Do YYYY, HH:mm:ss')}`);
+      return helpers.handlePostAndDeleteArticle(httpPostOptions, httpDeleteOptions, pendingPost._id);
     }, waitTimeInMs);
 
     // todo: if last post for this session, exit
@@ -37,42 +40,25 @@ const handlePendingPosts = (pendingPosts) => {
 const schedulerSession = (sessionArr, httpPostOptions, httpDeleteOptions) => {
   const pendingPostsInSession = [];
 
-  let dummyDevPost = {
-    title: 'all the thingsss...',
-    scheduledTime: moment().add(2, 'hours'),
-    devTest: 1
-  };
-  let dummyDevPost2 = {
-    title: 'second dummy post......',
-    scheduledTime: moment().add(3, 'hours'),
-    devTest: 2
-  };
-
-  sessionArr.push(dummyDevPost);
-  sessionArr.push(dummyDevPost2);
-
   sessionArr.map((p) => {
-
-    const postId = p._id; // easy reference to the posts ID
-
-    // prep the article in the queue we want for api POST
-    const _article = helpers.articleHelper(p);
-    httpPostOptions.body = _article;
-
-    // checks & conditions for posting immediately or during the scheduler session
+    // conditions for posting immediately or during the scheduler session
     const scheduledTime = moment(p.scheduledTime).toISOString();
     const needsPostingDuringSession = moment(scheduledTime).isBetween(moment(), sessionRange.end);
-    const currentTimeIsAfterScheduledTime = moment(scheduledTime).isBefore(moment());
+    const currentTimeIsAfterScheduledTime = moment(scheduledTime).isBefore(moment().toISOString());
 
     const needsPostingNow = currentTimeIsAfterScheduledTime;
     const needsPostingInSession = needsPostingNow ||
                                   needsPostingDuringSession;
 
+    // prep the article in the queue we want for api POST
+    const _article = helpers.articleHelper(p);
+    httpPostOptions.body = _article;
+
     if (needsPostingNow) {
-      helpers.throwConsole(`posting article ${postId} (${p.title})`);
-      return helpers.handlePostAndDeleteArticle(httpPostOptions, httpDeleteOptions, postId);
+      helpers.throwConsole(`posting article ${p._id} (${p.title})`);
+      return helpers.handlePostAndDeleteArticle(httpPostOptions, httpDeleteOptions, p._id);
     } else if (needsPostingDuringSession) {
-      helpers.throwConsole(`article needs posting during this session. Adding ${postId} to pendingPosts`);
+      helpers.throwConsole(`article needs posting during this session. Adding ${p._id} to pendingPosts`);
       return pendingPostsInSession.push(p);
     }
   });
@@ -88,13 +74,13 @@ const schedulerSession = (sessionArr, httpPostOptions, httpDeleteOptions) => {
     return 0;
   });
 
-  return handlePendingPosts(pendingPostsInSession);
+  return handlePendingPosts(pendingPostsInSession, httpDeleteOptions);
 
 }
 
 const scheduler = () => {
   rp(API.LOGIN, helpers.authOptions).then((auth) => {
-    const token = auth.token;
+    token = auth.token;
     const getOptions = helpers.createHttpOptions(token, 'GET');
     let httpPostOptions = helpers.createHttpOptions(token, 'POST');
     let httpDeleteOptions = helpers.createHttpOptions(token, 'DELETE');

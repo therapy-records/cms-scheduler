@@ -26,7 +26,7 @@ export const createHttpOptions = (token, method, body) => {
 const postNewsArticle = (httpOptions) =>
   rp(API.POST_NEWS, httpOptions);
 
-const deleteNewsQueuePost = (postId, httpOptions) => 
+const deleteNewsQueuePost = (postId, httpOptions) =>
   rp(API.NEWS_QUEUE + '/' + postId, httpOptions);
 
 export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQueueId) =>
@@ -34,17 +34,16 @@ export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQue
     const message = '🚀  posted new article to news! \n' + postData;
     throwConsole(message);
     return deleteNewsQueuePost(postInQueueId, deleteOptions).then((deletedPost) => {
-      const message = '🚀  deleted post in queue';
+      const message = `🚀  deleted post in queue ${postInQueueId}`;
       throwConsole(message);
-      process.exit(0);
     }, (delPostError) => {
-      const message = '😭  error deleting post in queue \n' + delPostError
+      const message = `😭  error deleting post in queue ${postInQueueId} \n ${delPostError}`
       const isErr = true;
       throwConsole(message, isErr);
       process.exit(1);
     });
   }, (postNewsErr) => {
-    const message = '😭  error posting news \n' + postNewsErr
+    const message = `😭  error posting news \n ${postNewsErr}`
     const isErr = true;
     throwConsole(message, isErr);
     process.exit(1);
