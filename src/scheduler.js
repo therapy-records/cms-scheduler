@@ -12,27 +12,32 @@ const sessionRange = {
 };
 
 const handlePendingPosts = (pendingPosts, httpDeleteOptions) => {
-  return pendingPosts.forEach((pendingPost) => {
-    const now = moment();
-    const postScheduledAt = pendingPost.scheduledTime;
-    const waitTime = moment.duration(moment(postScheduledAt).diff(moment(now)));
-    const waitTimeInMs = parseInt(waitTime.asMilliseconds());
+  const now = moment();
+  return pendingPosts.forEach((pendingPost, i) => {
+
+    const postScheduledAt = moment(pendingPost.scheduledTime);
+    const waitTimeInMs = postScheduledAt.diff(now);
 
     // prep the article for api post / handle old fields
     const _article = helpers.articleHelper(pendingPost);
     const httpPostOptions = helpers.createHttpOptions(token, 'POST', _article);
-
     helpers.throwConsole(`ready & waiting to post article '${_article.title}' @ ${_article.scheduledTime}`);
-    return setTimeout(() => {
-      helpers.throwConsole(`time to post article ${_article._id}! @ ${now.format('MMMM Do YYYY, HH:mm:ss')}`);
-      return helpers.handlePostAndDeleteArticle(httpPostOptions, httpDeleteOptions, pendingPost._id);
-    }, waitTimeInMs);
-
-    // todo: if last post for this session, exit
 
     // what if 2 posts posted for the same time? the second post would have a negative millisecond.
     // so probably add condition here - if scheduledAt is before *now* post now,
     // otherwise do MS things
+
+    return setTimeout(() => {
+      helpers.throwConsole(`time to post article ${_article._id}! @
+                            ${now.format('MMMM Do YYYY, HH:mm:ss')}.
+                            post's scheduledTime: ${pendingPost.scheduledTime}`);
+      return helpers.handlePostAndDeleteArticle(httpPostOptions, httpDeleteOptions, pendingPost._id).then(() => {
+        if (i + 1 === pendingPosts.length) {
+          process.exit(0);
+          helpers.throwConsole('🚀  all pendingPosts up to date!');
+        }
+      });
+    }, waitTimeInMs);
 
   });
 };
@@ -54,11 +59,13 @@ const schedulerSession = (sessionArr, httpPostOptions, httpDeleteOptions) => {
     const _article = helpers.articleHelper(p);
     httpPostOptions.body = _article;
 
+    // TODO: needsPostingNow not working - at 20:06,
+    // posts with a scheduledTime of 20:00 were posted via pendingPosts
     if (needsPostingNow) {
-      helpers.throwConsole(`posting article ${p._id} (${p.title})`);
+      helpers.throwConsole(`posting an article immediately: ${p._id} (${p.title})`);
       return helpers.handlePostAndDeleteArticle(httpPostOptions, httpDeleteOptions, p._id);
     } else if (needsPostingDuringSession) {
-      helpers.throwConsole(`article needs posting during this session. Adding ${p._id} to pendingPosts`);
+      helpers.throwConsole(`an article needs posting during this session. Adding ${p._id} to pendingPosts`);
       return pendingPostsInSession.push(p);
     }
   });
@@ -75,7 +82,6 @@ const schedulerSession = (sessionArr, httpPostOptions, httpDeleteOptions) => {
   });
 
   return handlePendingPosts(pendingPostsInSession, httpDeleteOptions);
-
 }
 
 const scheduler = () => {
@@ -88,18 +94,15 @@ const scheduler = () => {
 
     // if there any articles in the queue,
     // check if an article needs posting now (scheduledTime = now || beforeNow)
-    // if an article's ascheduledTime is before the end of the session's range (8 hours)
+    // if an article's scheduledTime is before the end of the session's range (8 hours? tbd)
     // wait for that time, and then do a POST.
 
     return rp(API.NEWS_QUEUE, getOptions).then((queueData) => {
       if (queueData.length && queueData.length > 0) {
-        helpers.throwConsole(`queue has ${queueData.length} items`);
 
         queueData.map((postInQueue) => {
 
-          // const scheduledTime = moment(postInQueue.scheduledTime).toISOString();
           const scheduledBeforeSessionEnd = moment(postInQueue.scheduledTime).isBefore(sessionRange.end);
-
 
           if (scheduledBeforeSessionEnd) {
             sessionArr.push(postInQueue);
@@ -107,7 +110,7 @@ const scheduler = () => {
         });
 
         if (sessionArr.length && sessionArr.length > 0) {
-          helpers.throwConsole(`${queueData.length} articles to be posted during this session`);
+          helpers.throwConsole(`queue has ${queueData.length} items. ${sessionArr.length} post(s) for this session`);
           return schedulerSession(sessionArr, httpPostOptions, httpDeleteOptions);
         } else {
           helpers.throwConsole('queue has nothing scheduled for the duration of this session. All up to date!');
