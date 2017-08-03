@@ -2,6 +2,7 @@ require('dotenv').config();
 import rp from 'request-promise';
 import API from '../constants';
 import throwConsole from './console';
+import sendMail from './sendMail';
 
 export const authOptions = {
   method: 'POST',
@@ -37,16 +38,26 @@ export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQue
       const message = `🚀  deleted post in queue ${postInQueueId}`;
       throwConsole(message);
     }, (delPostError) => {
-      const message = `😭  error deleting post in queue ${postInQueueId} \n ${delPostError}`
+      const errMessage = `😭  error deleting post in queue ${postInQueueId} \n ${delPostError}`
       const isErr = true;
-      throwConsole(message, isErr);
-      process.exit(1);
+      throwConsole(errMessage, isErr);
+      sendMail(errMessage).then(() =>
+        process.exit(1)
+      ).catch(() => {
+        // todo: throw log with nodemailer error
+        process.exit(1);
+      });
     });
   }, (postNewsErr) => {
-    const message = `😭  error posting news \n ${postNewsErr}`
+    const errMessage = `😭  error posting news \n ${postNewsErr}`
     const isErr = true;
-    throwConsole(message, isErr);
-    process.exit(1);
+    throwConsole(errMessage, isErr);
+    sendMail(errMessage).then(() => {
+      process.exit(1);
+    }).catch(() => {
+      // todo: throw log with nodemailer error
+      process.exit(1);
+    });
   });
 
 const apiHelper = {

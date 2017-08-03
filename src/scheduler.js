@@ -85,7 +85,7 @@ const schedulerSession = (sessionArr) => {
   return handlePendingPosts(pendingPostsInSession);
 }
 
-const scheduler = () => {
+const scheduler = () =>
   rp(API.LOGIN, helpers.authOptions).then((auth) => {
     token = auth.token;
     const getOptions = helpers.createHttpOptions(token, 'GET');
@@ -123,18 +123,27 @@ const scheduler = () => {
         process.exit(0);
       }
     }, (getNewsErr) => {
-      const message = '😭  error getting news \n' + getNewsErr;
+      const errMessage = '😭  error getting news \n' + getNewsErr;
       const isErr = true;
-      helpers.throwConsole(message, isErr);
-      process.exit(1);
+      helpers.throwConsole(errMessage, isErr);
+      helpers.sendMail(errMessage).then(() => {
+        process.exit(1);
+      }).catch(() => {
+        // todo: throw log with nodemailer error
+        process.exit(1);
+      });
     });
 
   }, (authErr) => {
-    const message = '😭  error authenticating \n' + authErr;
+    const errMessage = '😭  error authenticating \n' + authErr;
     const isErr = true;
-    helpers.throwConsole(message, isErr);
-    process.exit(1);
+    helpers.throwConsole(errMessage, isErr);
+    helpers.sendMail(errMessage).then(() => {
+      process.exit(1);
+    }).catch(() => {
+      // todo: throw log with nodemailer error
+      process.exit(1);
+    });
   });
-}
 
 export default scheduler;

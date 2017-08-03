@@ -6,7 +6,7 @@ const articleHelper = (article) => {
   }
 
   // remove queue related db fields
-  // delete article._id;
+  delete article._id;
   delete article.__v;
   return article;
 }
