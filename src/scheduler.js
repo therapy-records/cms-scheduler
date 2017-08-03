@@ -129,7 +129,9 @@ const scheduler = () =>
       helpers.sendMail(errMessage).then(() => {
         process.exit(1);
       }).catch(() => {
-        // todo: throw log with nodemailer error
+        const message = `😭  error sending mail \n ${mailErr}`;
+        const isErr = true;
+        helpers.throwConsole(message, isErr)
         process.exit(1);
       });
     });
@@ -141,7 +143,9 @@ const scheduler = () =>
     helpers.sendMail(errMessage).then(() => {
       process.exit(1);
     }).catch(() => {
-      // todo: throw log with nodemailer error
+      const isErr = true;
+      const message = `😭  error sending mail \n ${mailErr}`;
+      helpers.throwConsole(message, isErr)
       process.exit(1);
     });
   });

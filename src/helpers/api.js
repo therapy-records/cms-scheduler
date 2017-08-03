@@ -43,8 +43,10 @@ export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQue
       throwConsole(errMessage, isErr);
       sendMail(errMessage).then(() =>
         process.exit(1)
-      ).catch(() => {
-        // todo: throw log with nodemailer error
+      ).catch((mailErr) => {
+        const message = `😭  error sending mail \n ${mailErr}`;
+        const isErr = true;
+        throwConsole(message, isErr)
         process.exit(1);
       });
     });
@@ -54,8 +56,10 @@ export const handlePostAndDeleteArticle = (postOptions, deleteOptions, postInQue
     throwConsole(errMessage, isErr);
     sendMail(errMessage).then(() => {
       process.exit(1);
-    }).catch(() => {
-      // todo: throw log with nodemailer error
+    }).catch((mailErr) => {
+      const message = `😭  error sending mail \n ${mailErr}`;
+      const isErr = true;
+      throwConsole(errMessage, isErr);
       process.exit(1);
     });
   });
